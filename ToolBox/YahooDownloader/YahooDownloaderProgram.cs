@@ -68,7 +68,7 @@ namespace QuantConnect.ToolBox.YahooDownloader
 
                     var yahooEvents = downloader.DownloadSplitAndDividendData(symbolObject, DateTime.Parse("01/01/1980"), DateTime.MaxValue);
                     var factorFile = factorFileGenerator.CreateFactorFile(yahooEvents.ToList());
-                    factorFile.WriteToCsv(symbolObject);
+                    factorFile.WriteToFile(symbolObject);
                 }
             }
             catch (Exception err)
