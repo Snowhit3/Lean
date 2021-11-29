@@ -1331,10 +1331,10 @@ namespace QuantConnect.Algorithm
 
             //Validate:
             //1. Check Range:
-            if (end > DateTime.Now.Date.AddDays(-1))
-            {
-                end = DateTime.Now.Date.AddDays(-1);
-            }
+            //if (end > DateTime.Now.Date.AddDays(-1))
+            //{
+            //    end = DateTime.Now.Date.AddDays(-1);
+            //}
 
             //2. Make this at the very end of the requested date
             end = end.RoundDown(TimeSpan.FromDays(1)).AddDays(1).AddTicks(-1);
