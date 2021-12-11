@@ -44,9 +44,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
         public LiveSubscriptionEnumerator(SubscriptionDataConfig dataConfig, IDataQueueHandler dataQueueHandler, EventHandler handler)
         {
             _requestedSymbol = dataConfig.Symbol;
-            // we adjust the requested config symbol before sending it to the data queue handler
-            _currentConfig = new SubscriptionDataConfig(dataConfig, symbol: dataConfig.Symbol.GetLiveSubscriptionSymbol());
-            _underlyingEnumerator = dataQueueHandler.Subscribe(_currentConfig, handler);
+            _underlyingEnumerator = dataQueueHandler.SubscribeWithMapping(dataConfig, handler, out _currentConfig);
 
             // for any mapping event we will re subscribe
             dataConfig.NewSymbol += (_, _) =>
@@ -55,8 +53,7 @@ namespace QuantConnect.Lean.Engine.DataFeeds.Enumerators
                 _previousEnumerator = _underlyingEnumerator;
 
                 var oldSymbol = _currentConfig.Symbol;
-                _currentConfig = new SubscriptionDataConfig(dataConfig, symbol: dataConfig.Symbol.GetLiveSubscriptionSymbol());
-                _underlyingEnumerator = dataQueueHandler.Subscribe(_currentConfig, handler);
+                _underlyingEnumerator = dataQueueHandler.SubscribeWithMapping(dataConfig, handler, out _currentConfig);
 
                 Log.Trace($"LiveSubscriptionEnumerator({_requestedSymbol}): " +
                     $"resubscribing old: '{oldSymbol.Value}' new '{_currentConfig.Symbol.Value}'");

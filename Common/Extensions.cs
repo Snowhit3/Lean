@@ -152,6 +152,25 @@ namespace QuantConnect
         }
 
         /// <summary>
+        /// Helper method to deserialize a json array into a list also handling single json values
+        /// </summary>
+        /// <param name="jsonArray">The value to deserialize</param>
+        public static List<string> DeserializeList(this string jsonArray)
+        {
+            List<string> result = new();
+            try
+            {
+                result = JsonConvert.DeserializeObject<List<string>>(jsonArray);
+            }
+            catch(JsonReaderException)
+            {
+                result.Add(jsonArray);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Helper method to download a provided url as a string
         /// </summary>
         /// <param name="url">The url to download data from</param>
@@ -2925,13 +2944,15 @@ namespace QuantConnect
         /// Helper method to determine symbol for a live subscription
         /// </summary>
         /// <remarks>Useful for continuous futures where we subscribe to the underlying</remarks>
-        public static Symbol GetLiveSubscriptionSymbol(this Symbol symbol)
+        public static bool TryGetLiveSubscriptionSymbol(this Symbol symbol, out Symbol mapped)
         {
+            mapped = null;
             if (symbol.SecurityType == SecurityType.Future && symbol.IsCanonical() && symbol.HasUnderlying)
             {
-                return symbol.Underlying;
+                mapped = symbol.Underlying;
+                return true;
             }
-            return symbol;
+            return false;
         }
 
         /// <summary>
@@ -3001,6 +3022,35 @@ namespace QuantConnect
         }
 
         /// <summary>
+        /// Helper method to unsubscribe a given configuration, handling any required mapping
+        /// </summary>
+        public static void UnsubscribeWithMapping(this IDataQueueHandler dataQueueHandler, SubscriptionDataConfig dataConfig)
+        {
+            if (dataConfig.Symbol.TryGetLiveSubscriptionSymbol(out var mappedSymbol))
+            {
+                dataConfig = new SubscriptionDataConfig(dataConfig, symbol: mappedSymbol, mappedConfig: true);
+            }
+            dataQueueHandler.Unsubscribe(dataConfig);
+        }
+
+        /// <summary>
+        /// Helper method to subscribe a given configuration, handling any required mapping
+        /// </summary>
+        public static IEnumerator<BaseData> SubscribeWithMapping(this IDataQueueHandler dataQueueHandler,
+            SubscriptionDataConfig dataConfig,
+            EventHandler newDataAvailableHandler,
+            out SubscriptionDataConfig subscribedConfig)
+        {
+            subscribedConfig = dataConfig;
+            if (dataConfig.Symbol.TryGetLiveSubscriptionSymbol(out var mappedSymbol))
+            {
+                subscribedConfig = new SubscriptionDataConfig(dataConfig, symbol: mappedSymbol, mappedConfig: true);
+            }
+            var enumerator = dataQueueHandler.Subscribe(subscribedConfig, newDataAvailableHandler);
+            return enumerator ?? Enumerable.Empty<BaseData>().GetEnumerator();
+        }
+
+        /// <summary>
         /// Helper method to stream read lines from a file
         /// </summary>
         /// <param name="dataProvider">The data provider to use</param>
@@ -3016,10 +3066,16 @@ namespace QuantConnect
 
             using (var streamReader = new StreamReader(stream))
             {
-                while (!streamReader.EndOfStream)
+                string line;
+                do
                 {
-                    yield return streamReader.ReadLine();
+                    line = streamReader.ReadLine();
+                    if (line != null)
+                    {
+                        yield return line;
+                    }
                 }
+                while (line != null);
             }
         }
 
