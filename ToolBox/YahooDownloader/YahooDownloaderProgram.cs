@@ -63,7 +63,7 @@ namespace QuantConnect.ToolBox.YahooDownloader
                     writer.Write(data);
 
                     // Save factor file data
-                    string dataPath = LeanData.GenerateZipFilePath(Config.Get("data-folder"), symbolObject, DateTime.MaxValue, Resolution.Daily, TickType.Quote);
+                    string dataPath = LeanData.GenerateZipFilePath(Config.Get("data-folder"), symbolObject, DateTime.MaxValue, Resolution.Daily, TickType.Trade);
                     var factorFileGenerator = new FactorFileGenerator(symbolObject, dataPath);
 
                     var yahooEvents = downloader.DownloadSplitAndDividendData(symbolObject, DateTime.Parse("01/01/1980"), DateTime.MaxValue);
