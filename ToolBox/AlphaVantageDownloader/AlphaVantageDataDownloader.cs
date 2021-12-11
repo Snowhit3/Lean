@@ -121,6 +121,27 @@ namespace QuantConnect.ToolBox.AlphaVantageDownloader
 
             return GetTimeSeries(request);
         }
+        
+        /// <summary>
+        /// Get data from daily API
+        /// </summary>
+        /// <param name="request">Base request</param>
+        /// <param name="startUtc">Start time</param>
+        /// <param name="endUtc">End time</param>
+        /// <param name="symbol">Symbol to download</param>
+        /// <returns></returns>
+        private IEnumerable<TimeSeries> GetDailyAdjustedData(RestRequest request, DateTime startUtc, DateTime endUtc, Symbol symbol)
+        {
+            request.AddParameter("function", "TIME_SERIES_DAILY_ADJUSTED");
+
+            // The default output only includes 100 trading days of data. If we want need more, specify full output
+            if (GetBusinessDays(startUtc, endUtc, symbol) > 100)
+            {
+                request.AddParameter("outputsize", "full");
+            }
+
+            return GetTimeSeries(request);
+        }        
 
         /// <summary>
         /// Get data from intraday API
