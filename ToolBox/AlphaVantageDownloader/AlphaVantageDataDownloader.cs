@@ -91,7 +91,7 @@ namespace QuantConnect.ToolBox.AlphaVantageDownloader
                     data = GetIntradayData(request, startUtc, endUtc, resolution);
                     break;
                 case Resolution.Daily:
-                    data = GetDailyData(request, startUtc, endUtc, symbol);
+                    data = GetDailyAdjustedData(request, startUtc, endUtc, symbol);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(resolution), $"{resolution} resolution not supported by API.");
